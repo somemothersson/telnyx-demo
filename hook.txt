@@ -1,0 +1,15 @@
+ event_type: 'call.initiated',
+  id: 'fa39d5c5-d183-4e93-ae9e-b21bf09ce02b',
+  occurred_at: '2019-10-03T16:48:29.278915Z',
+  payload:
+   { call_control_id: 'v2:PLQwRlPIU-hXpG8Lh0xb0gX-xjD_L7-xZ8Jj05-U00QNJITR6B1WyA',
+     call_leg_id: 'a0754ce2-e5fd-11e9-aed5-02420a0f6d68',
+     call_session_id: 'a0755c5a-e5fd-11e9-af54-02420a0f6d68',
+     client_state: null,
+     connection_id: '1208941907246318745',
+     direction: 'incoming',
+     from: '+17084769340',
+     start_time: '2019-10-03T16:48:29.278915Z',
+     state: 'parked',
+     to: '+13127367272' },
+  record_type: 'event' }

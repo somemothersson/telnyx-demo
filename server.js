@@ -21,7 +21,8 @@ app.listen(PORT, () =>
 // IVR Webhook Route
 app.post("/ivr", async (req, res) => {
   try {
-   
+    
+    console.log(req.body.data)
     const options = {
       uri: `https://api.telnyx.com/v2/calls/${req.body.data.id}/actions/answer`,
       headers: {
@@ -32,7 +33,13 @@ app.post("/ivr", async (req, res) => {
     };
 
     request(options, (error, response, body) => {
-      console.log(response);
+        console.log(response)
+        if (error) console.error(error);
+
+        if (response.statusCode !== 200) {
+          return res.status(404).json({ msg: "No Github profile found" });
+        }
+        res.status(200);
     });
   } catch (error) {
     console.log(error.message);
