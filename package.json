@@ -1,0 +1,28 @@
+{
+  "name": "telnyx-demo",
+  "version": "1.0.0",
+  "description": "[] Create a Call Control Connection and Associate Application",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/somemothersson/telnyx-demo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/somemothersson/telnyx-demo/issues"
+  },
+  "homepage": "https://github.com/somemothersson/telnyx-demo#readme",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "express": "^4.17.1",
+    "nodemon": "^1.19.3",
+    "request": "^2.88.0",
+    "telnyx": "^1.2.3"
+  }
+}
