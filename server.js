@@ -84,7 +84,7 @@ const answerCall = (callCnId, clientState) => {
 };
 
 // IVR Menu Message
-const IVRmenu = (callCnId, ivrMessagee) => {
+const IVRmenu = (callCnId, ivrMessage) => {
   let action = "speak";
   request
     .post(`https://api.telnyx.com/calls/${callCnId}/actions/${action}`)
@@ -153,7 +153,7 @@ app.post("/ivr", async (req, res) => {
     //  direction: 'incoming'
     const direction = req.body.payload.direction;
     // dtmf digits
-    const ivrOption = req.body.payload.digits;
+    const ivrOption = req.body.payload.digit;
 
     console.log(`${timeStamp} - ccID ${callCnId}`);
     console.log(
@@ -172,8 +172,6 @@ app.post("/ivr", async (req, res) => {
         // }
         break;
       case "call_answered":
-        // switch (clientState) {
-        //   case !clientState:
         console.log(`*********************call answered ${eventType}`);
         IVRlisten(
           callCnId,
@@ -184,34 +182,6 @@ app.post("/ivr", async (req, res) => {
           `1`,
           null
         );
-        // switch (ivrOption) {
-        //   case "1":
-        //     IVRmenu(
-        //       callCnId,
-        //       `Thank you for calling Consolidated Ball Bearings,
-        //         To speak to Stan Press 1,
-        //         For Joe, Press 2,`,
-        //       `12`,
-        //       `1`,
-        //       "call-stan"
-        //     );
-        //     break;
-        //   case "2":
-        //     IVRmenu(
-        //       callCnId,
-        //       `Thank you for calling Consolidated Ball Bearings,
-        //         To speak to Stan Press 1,
-        //         For Joe, Press 2,`,
-        //       `12`,
-        //       `1`,
-        //       "call-joe"
-        //     );
-
-        //     break;
-        // }
-
-        //     break;
-        // }
         break;
       case "speak_ended":
         res.end();
@@ -219,6 +189,27 @@ app.post("/ivr", async (req, res) => {
       case "call_bridged":
         res.end();
         break;
+      case "dtmf":
+        console.log(`####### ${ivrOption}`)
+          if(ivrOption == "1" ) {
+            IVRlisten(
+              callCnId,
+              `Thank you for calling Stan`,
+              `12`,
+              `1`,
+              "call-stan"
+            );
+
+             } else if(ivrOption == "2") 
+              IVRlisten(
+                callCnId,
+                `Thank you for calling Joe,`,
+                `12`,
+                `1`,
+                "call-joe"
+              );
+  
+        break
 
       default:
         res.end();
