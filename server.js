@@ -1,9 +1,10 @@
 require("dotenv").config();
 const express = require("express");
+const request = require("request");
 const APIKey = process.env.API_KEY;
 const APISecret = process.env.API_SECRET;
 const APIToken = process.env.API_TOKEN;
-const request = require("request");
+
 
 //Load Express
 const app = express();
@@ -31,18 +32,55 @@ var mm = ("0" + (d.getMonth() + 1)).slice(-2);
 var yyyy = d.getFullYear();
 var timeStamp = `${yyyy}-${mm}-${dd}_${h}:${m}`;
 
-// IVR Menu
-const IVRmenu = () => {};
+
+// Transfer Call
+const transferCall = (callCnId, dest, origin) => {
+
+  let action = 'transfer'
+  request
+    .post(`https://api.telnyx.com/calls/${callCnId}/actions/${action}`)
+    .auth(APIKey, APISecret, true)
+    .form({ to: dest, from: origin }),
+    (error, response, body) => {
+      console.log(`request - response${body}`);
+      if (error) console.error(error);
+
+      console.log(body);
+    };
+
+
+};
+
+// IVR Menu Message
+const IVRmenu = (callCnId, ivrMessage) => {
+
+  let action = 'speak'
+  request
+    .post(`https://api.telnyx.com/calls/${callCnId}/actions/${action}`)
+    .auth(APIKey, APISecret, true)
+    .form({ payload: }),
+    (error, response, body) => {
+      console.log(`request - response${body}`);
+      if (error) console.error(error);
+
+      console.log(body);
+    };
+
+
+
+};
+
+
 
 // Answer Call
 const answerCall = (callCnId, callState) => {
   let action = `answer`;
   request
     .post(`https://api.telnyx.com/calls/${callCnId}/actions/${action}`)
-    .auth(APIKey, APISecret)
+    .auth(APIKey, APISecret, true)
     .form({ client_state: callState }),
     (error, response, body) => {
-      console.log(`request - response${response}`);
+      console.log(`request - response${body}`);
       if (error) console.error(error);
 
       console.log(body);
@@ -71,9 +109,9 @@ const answerCall = (callCnId, callState) => {
 
 // IVR Webhook Route
 app.post("/ivr", async (req, res) => {
-  res.status(200);
-
-  //  event_type: 'call.initiated',
+  
+  try {
+    //  event_type: 'call.initiated','call_answered"
   const eventType = req.body.event_type;
   //  id: 'fa39d5c5-d183-4e93-ae9e-b21bf09ce02b'
   const callCnId = req.body.payload.call_control_id;
@@ -81,24 +119,25 @@ app.post("/ivr", async (req, res) => {
   const dest = req.body.payload.to;
   //  from: '+17084769340'
   const origin = req.body.payload.from;
-  //  state: 'parked'
+  //  state: 'parked','
   const callState = req.body.payload.state;
   //  direction: 'incoming'
   const direction = req.body.payload.direction;
 
-  try {
+  console.log(`${timeStamp} - ccID ${callCnId}`)
+  console.log(`${timeStamp} - Complete Payload ${JSON.stringify(req.body, null, 4)}`)  
+
     switch (eventType) {
       // Answer Call
       case "call_intiated":
-          return {
-            
-            
-          }
+        if (direction == 'incoming'){
+          answerCall(callCnId, null)
+        } else {
+          answerCall(callCnId, 'stage-outgoing');
+        }  
           break;
       case "call_answered":
-        return {
-          
-        }
+      
         break;
       case "speak_ended":
         alert("test");
@@ -117,7 +156,7 @@ app.post("/ivr", async (req, res) => {
         res.end();
     }
 
-    answerCall(callCnId);
+    
   } catch (error) {
     console.error(error);
   }
