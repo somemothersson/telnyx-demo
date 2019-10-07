@@ -5,6 +5,7 @@ const request = require("request");
 // Telnyx API credentials and Settings
 const APIKey = process.env.API_KEY;
 const APISecret = process.env.API_SECRET;
+const MSGProfileSecret = process.env.MSG_PROFILE_SECRET;
 
 const ivrVoice = "male";
 const ivrLang = "en-US";
@@ -137,6 +138,33 @@ const hangupCall = (callCnId, dest, origin) => {
     };
 };
 
+// IVR Menu Listen for Options - gather using speak
+const sendText = (txtOrigin) => {
+  let action = "messages";
+  let textDest = "7084769340"
+console.log(`FROM - ${txtOrigin}`)
+  const headers = {
+    'X-Profile-Secret': `${MSGProfileSecret}`,
+  }
+  
+  const payload = {
+    'from': `+13127367272`,
+    'to': `+17084769340`,
+    'body': 'Hello, world!',
+    'delivery_status_webhook_url': 'https://example.com/campaign/7214'
+  }
+  
+  request.post({
+    url: 'https://sms.telnyx.com/messages',
+    headers: headers,
+    json: payload
+  }, function(err, resp, body) {
+    console.log('error:', err);
+    console.log('statusCode:', resp && resp.statusCode);
+    console.log('body:', body);
+  });
+};
+
 // IVR Webhook Route
 app.post("/ivr", async (req, res) => {
   try {
@@ -153,7 +181,7 @@ app.post("/ivr", async (req, res) => {
     //  direction: 'incoming'
     const direction = req.body.payload.direction;
     // dtmf digits
-    const ivrOption = req.body.payload.digit;
+    const ivrOption = req.body.payload.digits;
 
     console.log(`${timeStamp} - ccID ${callCnId}`);
     console.log(
@@ -189,9 +217,10 @@ app.post("/ivr", async (req, res) => {
       case "call_bridged":
         res.end();
         break;
-      case "dtmf":
+      case "dtmf", "gather_ended":
         console.log(`####### ${ivrOption}`)
-          if(ivrOption == "1" ) {
+          if (ivrOption === "3" || ivrOption === "1"  ) {
+            console.log("stan")
             IVRlisten(
               callCnId,
               `Thank you for calling Stan`,
@@ -199,8 +228,11 @@ app.post("/ivr", async (req, res) => {
               `1`,
               "call-stan"
             );
+            sendText(dest)
+            res.end()
 
-             } else if(ivrOption == "2") 
+             } else if(ivrOption === "2") {
+              console.log("joe")
               IVRlisten(
                 callCnId,
                 `Thank you for calling Joe,`,
@@ -208,6 +240,10 @@ app.post("/ivr", async (req, res) => {
                 `1`,
                 "call-joe"
               );
+              sendText(dest)
+              res.end()
+             }
+             
   
         break
 
