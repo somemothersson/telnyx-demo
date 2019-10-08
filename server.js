@@ -1,12 +1,14 @@
+// Dependencies
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
 
-// Telnyx API credentials and Settings
+// Telnyx API credentials
 const APIKey = process.env.API_KEY;
 const APISecret = process.env.API_SECRET;
 const MSGProfileSecret = process.env.MSG_PROFILE_SECRET;
 
+// Telnyx IVR settings
 const ivrVoice = "male";
 const ivrLang = "en-US";
 
@@ -16,7 +18,7 @@ const app = express();
 // Init Middleware
 app.use(express.json({ extended: false }));
 
-// Define Route
+// Define Front End Route - See App is running from Web
 app.get("/", (req, res) => res.send("TelNyx Demo Running"));
 
 const PORT = process.env.PORT || 8080;
@@ -36,6 +38,29 @@ var mm = ("0" + (d.getMonth() + 1)).slice(-2);
 var yyyy = d.getFullYear();
 var timeStamp = `${yyyy}-${mm}-${dd}_${h}:${m}`;
 
+// ===========================CALL CONTROL FUNCTIONS============================
+
+// Answer Call
+const answerCall = (callCntrlId, clientState) => {
+  let action = `answer`;
+  let locClientState64 = null;
+  if (clientState)
+    locClientState64 = Buffer.from(clientState).toString("base64");
+  console.log(`Answer Call Client State: ${clientState}`);
+  request
+    .post(`https://api.telnyx.com/calls/${callCntrlId}/actions/${action}`)
+    .auth(APIKey, APISecret, true)
+    .form({ client_state: locClientState64 }),
+    {},
+    (error, response, body) => {
+      console.log(`Answer statusCode: ${response} ${response.statusCode}`);
+      console.log(`Answer body: ${body}`);
+      if (error) console.error(error);
+
+      
+    };
+};
+
 // Transfer Call
 const transferCall = (callCntrlId, dest, origin) => {
   let action = "transfer";
@@ -44,64 +69,21 @@ const transferCall = (callCntrlId, dest, origin) => {
     .auth(APIKey, APISecret, true)
     .form({ to: dest, from: origin }),
     (error, response, body) => {
-      console.log(`request - response${body}`);
+      console.log(`statusCode: ${response} ${response.statusCode}`);
+      console.log(`body: ${body}`);
       if (error) console.error(error);
 
-      console.log(body);
-    };
-};
-
-// Answer Call
-const answerCall = (callCntrlId, clientState) => {
-  console.log("answer");
-  let action = `answer`;
-  request
-    .post(`https://api.telnyx.com/calls/${callCntrlId}/actions/${action}`)
-    .auth(APIKey, APISecret, true)
-    .form({ client_state: Buffer.from("call_answered").toString("base64") }),
-    (error, response, body) => {
-      console.log(`request - response${body}`);
-      if (error) console.error(error);
-
-      console.log(body);
-    };
-
-  // const options = {
-  //   url: `https://api.telnyx.com/calls/${callCntrlId}/actions/answer`,
-  //   auth: {
-  //     username: APIKey,
-  //     password: APISecret,
-  //     sendImmediately: true
-  //   },
-  //   method: `POST`,
-  //   form: {
-  //     client_state: Buffer.from("call_answered").toString("base64")
-  //   }
-  // };
-  // request(options, (error, response, body) => {
-  //   console.log(`request - response${body}`);
-  //   if (error) console.error(error);
-  // });
-};
-
-// Speak Message
-const speakMessage = (callCntrlId, ivrMessage) => {
-  let action = "speak";
-  request
-    .post(`https://api.telnyx.com/calls/${callCntrlId}/actions/${action}`)
-    .auth(APIKey, APISecret, true)
-    .form({ payload: ivrMessage, voice: ivrVoice, language: ivrLang }),
-    (error, response, body) => {
-      console.log(`#####request - response${body}`);
-      if (error) console.error(error);
-
-      console.log(body);
+     
     };
 };
 
 // IVR Menu Listen for Options - gather using speak
-const IVRlisten = (callCntrlId, ivrMessage, digits, maxDigits, state) => {
+const IVRlisten = (callCntrlId, ivrMessage, digits, maxDigits, clientState) => {
   let action = "gather_using_speak";
+  let locClientState64 = null;
+  if (clientState)
+    locClientState64 = Buffer.from(clientState).toString("base64");
+    console.log(`IVRListen Client State: ${clientState}`)
 
   request
     .post(`https://api.telnyx.com/calls/${callCntrlId}/actions/${action}`)
@@ -112,19 +94,41 @@ const IVRlisten = (callCntrlId, ivrMessage, digits, maxDigits, state) => {
       language: ivrLang,
       valid_digits: digits,
       max: maxDigits,
-      client_state: Buffer.from("gather_ended").toString("base64")
+      client_state: locClientState64
     }),
     {},
     (error, response, body) => {
-      console.log(`request - response${body}`);
+      console.log(`IVRListen statusCode: ${response} ${response.statusCode}`);
+      console.log(`IVRListen body: ${body}`);
+      if (error) console.error(error);
+      
+    };
+};
+
+// Speak Message => Send Text Message
+const speakMessage = (callOrigin, callCntrlId, ivrMessage) => {
+
+  let action = "speak";
+  console.log("SPEAK")
+  request
+    .post(`https://api.telnyx.com/calls/${callCntrlId}/actions/${action}`)
+    .auth(APIKey, APISecret, true)
+    .form({ payload: ivrMessage, voice: ivrVoice, language: ivrLang }),
+    {},
+    (error, response, body) => {
+      console.log(`Speak statusCode: ${response} ${response.statusCode}`);
+      console.log(`Speak body: ${body}`);
+      console.log("[%s] DEBUG - Command Executed [%s]", timeStamp, action)
       if (error) console.error(error);
 
-      console.log(body);
-    };
+      
+    }
+  // sendText(callCntrlId, callOrigin);
 };
 
 // Hangup Call
 const hangupCall = callCntrlId => {
+  console.log(hangupCall);
   let action = "hangup";
   request
     .post(`https://api.telnyx.com/calls/${callCntrlId}/actions/${action}`)
@@ -132,15 +136,17 @@ const hangupCall = callCntrlId => {
     .form({}),
     {},
     (error, response, body) => {
-      console.log(`request - response${body}`);
-      if (error) console.error(error);
-
       console.log(body);
+      console.log(`Hang Up statusCode: ${JSON.stringify(response)} ${response.statusCode}`);
+      console.log(`Hang up body: ${body}`);
+      if (error) console.error(error);
+      
     };
+
 };
 
-// IVR Menu Listen for Options - gather using speak
-const sendText = txtOrigin => {
+// Send Text Message => Hangup Call
+const sendText = (callCntrlId, txtOrigin) => {
   console.log(`FROM - ${txtOrigin}`);
 
   const options = {
@@ -148,18 +154,18 @@ const sendText = txtOrigin => {
     headers: { "X-Profile-Secret": `${MSGProfileSecret}` },
     json: {
       from: `+13127367272`,
-      to: `+17084769340`,
+      to: `+13127367295`,
       body: `You have received a request from ${txtOrigin}`,
       delivery_status_webhook_url: "https://example.com/campaign/7214"
     }
   };
 
-  request.post(options, (err, resp, body) => {
-    console.log("error:", err);
-    console.log("statusCode:", resp && resp.statusCode);
-    console.log("body:", body);
+  request.post(options, (error, response, body) => {
+    console.error(error);
+    console.log(`Text statusCode: ${response} ${response.statusCode}`);
+    console.log(`Text body: ${body}`);
   });
-  hangupCall(callCnId);
+  hangupCall(callCntrlId);
 };
 
 // IVR Webhook Route
@@ -181,22 +187,33 @@ app.post("/ivr", async (req, res) => {
     const ivrOption = req.body.payload.digits;
 
     console.log(`${timeStamp} - ccID ${callCnId}`);
-    console.log(
-      `${timeStamp} - Complete Payload ${JSON.stringify(req.body, null, 4)}`
-    );
-    console.log(`********************* ${eventType}`);
-    switch (eventType) {
+    // console.log(
+    //   `${timeStamp} - Complete Payload ${JSON.stringify(req.body, null, 4)}`
+    // );
+    console.log(`Inbound Event Type: ${eventType}`);
 
+    // ===========================IVR LOGIC============================
+    //Using the Event Type to Trigger Functions
+    switch (eventType) {
+      
       // Answer Call
       case "call_initiated":
-        if (direction == "incoming") {
+          
+        //  If "call_initiated state is direction incoming, it is a new call => Answer Call
+        if (direction === "incoming") {
+          console.log(`Incoming Call InitiatedClient State: ${clientState}`);
           answerCall(callCnId, null);
         } else {
           answerCall(callCnId, "stage-outgoing");
         }
+        res.end()
         break;
+
+      // Call Answered - Play Greeting - Gather Digits
       case "call_answered":
-        // Play Greeting
+        
+        if (!clientState || clientState != null)
+        console.log(`Call Answered Client State !null: ${clientState}`);
           IVRlisten(
             callCnId,
             `Thank you for calling Consolidated Ball Bearings,
@@ -207,30 +224,35 @@ app.post("/ivr", async (req, res) => {
             null
           );
         break;
+
       case "speak_ended":
         res.end();
         break;
+
       case "call_bridged":
         res.end();
         break;
-      case ("gather_ended"):
-        // DTMF Received - Route Option
-        console.log(`####### ${ivrOption}`);
+
+      // DTMF Received - Route Option
+      case "gather_ended":
+        // Log which option from the menu was chosen
+        
+        if (!clientState || clientState != null) {
+          console.log(`Gather Ended State !null : ${clientState}`);
+       
+          //Choose Option 1
           if (ivrOption === "1") {
-            console.log("stan");
-            speakMessage(callCnId, `Thank you for calling Steve`);
-            sendText(origin);
-            res.end();
-            hangupCall(callCnId);
-            
+            console.log(`IVR OPTION = ${ivrOption}`)
+            speakMessage(origin, callCnId, `Thank you for calling Steve`);
+           
+            //Choose Option 2
           } else if (ivrOption === "2") {
-            console.log("joe");
-            speakMessage(callCnId, `Thank you for calling Joe,`);
-            sendText(origin);
-            res.end();
-            hangupCall(callCnId);
-          }
-         else break;
+            console.log(`IVR OPTION = ${ivrOption}`)
+            speakMessage(origin, callCnId, `Thank you for calling Joe,He will be notified of your call, GoodBye`);
+          } else res.end();
+        } else 
+
+        break;
 
       default:
         res.end();
