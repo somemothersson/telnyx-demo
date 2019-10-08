@@ -154,7 +154,7 @@ const sendText = (callCntrlId, txtOrigin) => {
     headers: { "X-Profile-Secret": `${MSGProfileSecret}` },
     json: {
       from: `+13127367272`,
-      to: `+13127367295`,
+      to: txtOrigin,
       body: `You have received a request from ${txtOrigin}`,
       delivery_status_webhook_url: "https://example.com/campaign/7214"
     }
