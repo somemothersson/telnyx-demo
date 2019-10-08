@@ -123,7 +123,7 @@ const speakMessage = (callOrigin, callCntrlId, ivrMessage) => {
 
       
     }
-  // sendText(callCntrlId, callOrigin);
+  sendText(callCntrlId, callOrigin);
 };
 
 // Hangup Call
