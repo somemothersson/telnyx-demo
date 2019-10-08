@@ -203,8 +203,10 @@ app.post("/ivr", async (req, res) => {
         if (direction === "incoming") {
           console.log(`Incoming Call InitiatedClient State: ${clientState}`);
           answerCall(callCnId, null);
+          res.send(200)
         } else {
           answerCall(callCnId, "stage-outgoing");
+          res.send(200)
         }
         res.end()
         break;
@@ -223,6 +225,7 @@ app.post("/ivr", async (req, res) => {
             `1`,
             null
           );
+          res.send(200)
         break;
 
       case "speak_ended":
@@ -243,12 +246,13 @@ app.post("/ivr", async (req, res) => {
           //Choose Option 1
           if (ivrOption === "1") {
             console.log(`IVR OPTION = ${ivrOption}`)
-            speakMessage(origin, callCnId, `Thank you for calling Steve`);
-           
+            speakMessage(origin, callCnId, `You Called Steve, He will be notified of your call, Goodbye`);
+            res.send(200)
             //Choose Option 2
           } else if (ivrOption === "2") {
             console.log(`IVR OPTION = ${ivrOption}`)
-            speakMessage(origin, callCnId, `Thank you for calling Joe,He will be notified of your call, GoodBye`);
+            speakMessage(origin, callCnId, `You called Joe, He will be notified of your call, GoodBye`);
+            res.send(200)
           } else res.end();
         } else 
 
