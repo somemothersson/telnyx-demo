@@ -19,7 +19,9 @@ const app = express();
 app.use(express.json({ extended: false }));
 
 // Define Front End Route - See App is running from Web
-app.get("/", (req, res) => res.send("TelNyx Demo Running"));
+app.get("/", (req, res) =>  res.send("TelNyx Demo Running"));
+
+
 
 const PORT = process.env.PORT || 8080;
 
@@ -123,7 +125,7 @@ const speakMessage = (callOrigin, callCntrlId, ivrMessage) => {
 
       
     }
-  sendText(callCntrlId, callOrigin);
+  sendText(callOrigin);
 };
 
 // Hangup Call
@@ -146,7 +148,7 @@ const hangupCall = callCntrlId => {
 };
 
 // Send Text Message => Hangup Call
-const sendText = (callCntrlId, txtOrigin) => {
+const sendText = txtOrigin => {
   console.log(`FROM - ${txtOrigin}`);
 
   const options = {
@@ -155,7 +157,7 @@ const sendText = (callCntrlId, txtOrigin) => {
     json: {
       from: `+13127367272`,
       to: txtOrigin,
-      body: `You have received a request from ${txtOrigin}`,
+      body: `Thank you for your call!`,
       delivery_status_webhook_url: "https://example.com/campaign/7214"
     }
   };
@@ -165,7 +167,7 @@ const sendText = (callCntrlId, txtOrigin) => {
     console.log(`Text statusCode: ${response} ${response.statusCode}`);
     console.log(`Text body: ${body}`);
   });
-  hangupCall(callCntrlId);
+  
 };
 
 // IVR Webhook Route
@@ -214,13 +216,14 @@ app.post("/ivr", async (req, res) => {
       // Call Answered - Play Greeting - Gather Digits
       case "call_answered":
         
-        if (!clientState || clientState != null)
-        console.log(`Call Answered Client State !null: ${clientState}`);
+        if (!clientState)
+        console.log(`Call Answered Client State: ${clientState}`);
           IVRlisten(
             callCnId,
             `Thank you for calling Consolidated Ball Bearings,
                 To speak to Steve Press 1,
-                For Joe, Press 2,`,
+                For Joe, Press 2,
+                To hangup, Press 3`,
             `12`,
             `1`,
             null
@@ -240,18 +243,22 @@ app.post("/ivr", async (req, res) => {
       case "gather_ended":
         // Log which option from the menu was chosen
         
-        if (!clientState || clientState != null) {
-          console.log(`Gather Ended State !null : ${clientState}`);
+        if (!clientState) {
+          console.log(`Gather Ended State : ${clientState}`);
        
           //Choose Option 1
           if (ivrOption === "1") {
             console.log(`IVR OPTION = ${ivrOption}`)
-            speakMessage(origin, callCnId, `You Called Steve, He will be notified of your call, Goodbye`);
+           speakMessage(origin, callCnId, `You Called Steve, He will be notified of your call, Goodbye`);
             res.send(200)
             //Choose Option 2
           } else if (ivrOption === "2") {
             console.log(`IVR OPTION = ${ivrOption}`)
             speakMessage(origin, callCnId, `You called Joe, He will be notified of your call, GoodBye`);
+            res.send(200)
+          } else if (ivrOption === "3") {
+            console.log(`IVR OPTION = ${ivrOption}`)
+            hangupCall(callCnId)
             res.send(200)
           } else res.end();
         } else 
