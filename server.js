@@ -108,7 +108,7 @@ const IVRlisten = (callCntrlId, ivrMessage, digits, maxDigits, clientState) => {
 };
 
 // Speak Message => Send Text Message
-const speakMessage = (callOrigin, callCntrlId, ivrMessage) => {
+const speakMessage = (calledUser, callOrigin, callCntrlId, ivrMessage) => {
 
   let action = "speak";
   console.log("SPEAK")
@@ -125,7 +125,7 @@ const speakMessage = (callOrigin, callCntrlId, ivrMessage) => {
 
       
     }
-  sendText(callOrigin);
+  sendText(calledUser, callOrigin);
 };
 
 // Hangup Call
@@ -148,7 +148,7 @@ const hangupCall = callCntrlId => {
 };
 
 // Send Text Message => Hangup Call
-const sendText = txtOrigin => {
+const sendText = (calledUser, txtOrigin) => {
   console.log(`FROM - ${txtOrigin}`);
 
   const options = {
@@ -157,7 +157,7 @@ const sendText = txtOrigin => {
     json: {
       from: `+13127367272`,
       to: txtOrigin,
-      body: `Thank you for your call!`,
+      body: `Thank you for your call to ${calledUser}!`,
       delivery_status_webhook_url: "https://example.com/campaign/7214"
     }
   };
@@ -249,12 +249,12 @@ app.post("/ivr", async (req, res) => {
           //Choose Option 1
           if (ivrOption === "1") {
             console.log(`IVR OPTION = ${ivrOption}`)
-           speakMessage(origin, callCnId, `You Called Steve, He will be notified of your call, Goodbye`);
+           speakMessage("Steve", origin, callCnId, `You Called Steve, He will be notified of your call, Goodbye`);
             res.send(200)
             //Choose Option 2
           } else if (ivrOption === "2") {
             console.log(`IVR OPTION = ${ivrOption}`)
-            speakMessage(origin, callCnId, `You called Joe, He will be notified of your call, GoodBye`);
+            speakMessage("Joe", origin, callCnId, `You called Joe, He will be notified of your call, GoodBye`);
             res.send(200)
           } else if (ivrOption === "3") {
             console.log(`IVR OPTION = ${ivrOption}`)
